@@ -1,6 +1,8 @@
 import type { NextPage } from 'next'
-import { useEffect , useRef} from 'react';
-import { Profile } from '../types/Profile'
+import { useEffect , useRef, useState} from 'react';
+import { Profile } from '../types/Profile';
+import * as signalR from "@microsoft/signalr";
+//import Peer from 'peerjs';
 
 const getDevicesAndApplyStream = async (videoObject: any) => {
     const devices = await window.navigator
@@ -22,11 +24,49 @@ const getDevicesAndApplyStream = async (videoObject: any) => {
 
 }
 
+const peerInit = async () => {
+    const peerjs = await import('peerjs');
+    return new Promise( (resolve) => {
+        resolve(peerjs.default);
+    })
+}
+
+const peerInstance = async () => {
+    const Peer:any = await peerInit();
+    console.log(new Peer("sal"));
+}
+
+
 const Profiles = ({ profiles } : {profiles: Profile[] } ) => {
     let videoObject:any = useRef(null);
+    // let [peer, setPeer]: any = useState(import('peerjs').then( async ({ default: Peer }) => {
+    //     let p = await new Peer();
+    //     return p;
+    // } ));
+
+
+    //import('peerjs').then( data => console.log(data));
 
     useEffect( () => {
         getDevicesAndApplyStream(videoObject.current);
+
+        
+        let connection = new signalR.HubConnectionBuilder()
+            .withUrl("https://localhost:5001/profilehub")
+            .build();
+
+        connection.on("send", data => {
+            console.log(data);
+        });
+
+        connection.start()
+            .then(() => {
+                console.log("SEND MESSAGE");
+                connection.invoke("SendMessage", "Hello", "Sylvain")
+            });
+
+        peerInstance();
+
     })
 
     return (
