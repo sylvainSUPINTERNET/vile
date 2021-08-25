@@ -2,6 +2,8 @@ import type { NextPage } from 'next'
 import { useEffect , useRef, useState} from 'react';
 import { Profile } from '../types/Profile';
 import * as signalR from "@microsoft/signalr";
+import { nanoid } from 'nanoid'
+
 //import Peer from 'peerjs';
 
 const getDevicesAndApplyStream = async (videoObject: any) => {
@@ -31,9 +33,10 @@ const peerInit = async () => {
     })
 }
 
-const peerInstance = async () => {
+const peerInstance = async (hubConnection: any) => {
     const Peer:any = await peerInit();
-    console.log(new Peer("sal"));
+    let p = new Peer(nanoid())
+    hubConnection.invoke("SendMessage", "Hello", p._id)
 }
 
 
@@ -59,13 +62,12 @@ const Profiles = ({ profiles } : {profiles: Profile[] } ) => {
             console.log(data);
         });
 
+
         connection.start()
             .then(() => {
-                console.log("SEND MESSAGE");
-                connection.invoke("SendMessage", "Hello", "Sylvain")
-            });
+                peerInstance(connection);
 
-        peerInstance();
+            });
 
     })
 
